@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>흔적을 남겨주세요!</title>
+<style>
+  :root {
+    --bg: #f7eeee; --card: #ffffff; --ink: #2a1618; --muted: #7a6165;
+    --line: #e8d4d5; --accent: #b01e2b; --accent-ink: #ffffff; --soft: #fceaeb;
+    --ok: #1f6b45; --err: #8f1d24;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #170f10; --card: #221719; --ink: #f3e6e7; --muted: #b39a9d;
+      --line: #3b2a2d; --accent: #ff7a82; --accent-ink: #2a0b0e; --soft: #34191c;
+      --ok: #6fcf9a; --err: #ffb3b8;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.7; padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 24px; margin-bottom: 20px; }
+  .post { border-top: 5px solid var(--accent); }
+  h1 { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: -0.01em; line-height: 1.3; }
+  h2 { font-size: 1.1rem; margin: 0 0 14px; }
+  .meta { color: var(--muted); font-size: .88rem; margin: 0 0 20px; }
+  .post p { margin: 0 0 1em; }
+  label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
+  .hint { font-weight: 400; color: var(--muted); }
+  input[type=text], textarea {
+    width: 100%; font: inherit; color: inherit; background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px;
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .field { margin-bottom: 16px; }
+  .count { text-align: right; font-size: .8rem; color: var(--muted); margin-top: 4px; }
+  button { font: inherit; font-weight: 600; cursor: pointer; border: 0; border-radius: 6px; padding: 12px; }
+  .primary { width: 100%; background: var(--accent); color: var(--accent-ink); }
+  .secondary { width: 100%; background: transparent; color: var(--ink); border: 1px solid var(--line); margin-top: 8px; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .status { min-height: 1.5em; margin: 14px 0 0; font-size: .92rem; }
+  .status.ok { color: var(--ok); }
+  .status.err { color: var(--err); }
+  .trap { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+
+  .review { padding: 14px 0; border-top: 1px solid var(--line); }
+  .review:first-child { border-top: 0; padding-top: 0; }
+  .review .who { font-weight: 700; font-size: .92rem; color: var(--accent); }
+  .review.fresh { background: var(--soft); border-radius: 8px; padding: 14px; margin-bottom: 6px; border-top: 0; }
+  .review .when { color: var(--muted); font-size: .8rem; margin-left: 8px; font-weight: 400; }
+  .review .body { margin: 4px 0 0; white-space: pre-wrap; word-break: break-word; }
+  .empty { color: var(--muted); margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============================================================
+       1) 게시글 영역  ★ 여기 제목·날짜·본문을 본인 글로 바꾸세요 ★
+       문단 하나 = <p>문단 내용</p> 한 줄
+       ============================================================ -->
+  <section class="post">
+    <h1>🍎 후기, 감상, 요청 기타 등등 🍎</h1>
+    <p class="meta">2026년 11월 4일 · 일주</p>
+    <p>여러분의 후기, 감상, 요청 등을 남겨주세요!</p>
+    <p>예시) ~ 썰 이어 써주세요, GIGO 빨리 주세요. 등등</p>
+  </section>
+
+  <!-- ============================================================
+       2) 후기 작성 폼
+       ============================================================ -->
+  <section>
+    <h2>흔적 남기기</h2>
+    <form id="reviewForm" novalidate>
+      <div class="field">
+        <label for="nickname">닉네임 <span class="hint">(선택, 20자까지 · 비워두면 익명)</span></label>
+        <input id="nickname" type="text" maxlength="20" autocomplete="nickname" placeholder="비워두면 익명">
+      </div>
+      <div class="field">
+        <label for="message">흔적</label>
+        <textarea id="message" maxlength="1000" required placeholder="자유롭게 흔적을 남겨주세요!"></textarea>
+        <div class="count"><span id="counter">0</span> / 1000</div>
+      </div>
+      <!-- 스팸 봇 방지용 숨김 칸 -->
+      <div class="trap" aria-hidden="true">
+        <label>웹사이트 <input id="website" type="text" tabindex="-1" autocomplete="off"></label>
+      </div>
+      <button id="submitBtn" class="primary" type="submit">흔적 남기기</button>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <!-- ============================================================
+       3) 다른 사람들의 후기 목록
+       ============================================================ -->
+  <section>
+    <h2>흔적들 <span id="total" class="hint"></span></h2>
+    <div id="reviewList"><p class="empty">흔적을 불러오는 중이에요…</p></div>
+    <button id="moreBtn" class="secondary" type="button" hidden>흔적 더 보기</button>
+  </section>
+
+</div>
+
+<script>
+  // ============================================================
+  //  ★ 여기 두 값만 본인 Supabase 값으로 바꾸세요 ★
+  //  Supabase 대시보드 → Project Settings → API Keys (또는 상단 Connect 버튼)
+  //   - Project URL          → SUPABASE_URL  (https://xxxx.supabase.co)
+  //   - Publishable key      → SUPABASE_ANON_KEY  (sb_publishable_ 로 시작, 공개용이라 코드에 넣어도 됩니다)
+  //     (예전 방식의 anon public key(eyJ... 로 시작)를 넣어도 동작합니다)
+  //   ※ secret key / service_role key 는 절대 여기에 넣지 마세요.
+  // ============================================================
+  var SUPABASE_URL = "https://sknvgxcriiblwmgmivei.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_fnzgXg_dSOUcKH-Yfsn1BA_ujrlzBMX";
+
+  var COOLDOWN_MS = 30000; // 같은 브라우저 연속 전송 방지 (30초)
+  var PAGE_SIZE = 20;      // 한 번에 불러올 후기 수
+
+  var form = document.getElementById("reviewForm");
+  var nickInput = document.getElementById("nickname");
+  var msgInput = document.getElementById("message");
+  var trap = document.getElementById("website");
+  var btn = document.getElementById("submitBtn");
+  var statusEl = document.getElementById("status");
+  var counter = document.getElementById("counter");
+  var listEl = document.getElementById("reviewList");
+  var moreBtn = document.getElementById("moreBtn");
+  var totalEl = document.getElementById("total");
+
+  var loaded = 0;
+  var justPosted = false; // 방금 후기를 남겼으면 맨 위 후기를 강조해서 보여줌
+
+  function configured() {
+    return SUPABASE_URL.indexOf("YOUR-PROJECT-ID") === -1 && SUPABASE_ANON_KEY.indexOf("YOUR-ANON") === -1;
+  }
+  function headers(extra) {
+    var h = { "apikey": SUPABASE_ANON_KEY };
+    // 예전 방식 anon 키(JWT, eyJ...)일 때만 Authorization 헤더를 함께 보냄. 새 Publishable 키는 apikey 헤더만으로 충분
+    if (SUPABASE_ANON_KEY.indexOf("eyJ") === 0) h["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
+    for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = "status" + (kind ? " " + kind : "");
+  }
+
+  // ---------- 후기 목록 불러오기 ----------
+  function formatDate(iso) {
+    var d = new Date(iso);
+    return d.toLocaleString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+  function renderReview(r, fresh) {
+    var item = document.createElement("div");
+    item.className = "review" + (fresh ? " fresh" : "");
+    var who = document.createElement("div");
+    who.className = "who";
+    who.textContent = r.nickname || "익명";
+    var when = document.createElement("span");
+    when.className = "when";
+    when.textContent = formatDate(r.created_at);
+    who.appendChild(when);
+    var body = document.createElement("p");
+    body.className = "body";
+    body.textContent = r.message; // textContent 로 넣어서 악성 코드가 실행되지 않음
+    item.appendChild(who);
+    item.appendChild(body);
+    return item;
+  }
+
+  function loadReviews(reset) {
+    if (!configured()) {
+      listEl.innerHTML = "";
+      var p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "아직 Supabase 주소와 키가 설정되지 않았어요. 코드 위쪽의 두 값을 먼저 바꿔주세요.";
+      listEl.appendChild(p);
+      return;
+    }
+    if (reset) loaded = 0;
+    moreBtn.disabled = true;
+
+    var url = SUPABASE_URL + "/rest/v1/reviews?select=nickname,message,created_at" +
+              "&hidden=eq.false&order=created_at.desc&limit=" + PAGE_SIZE + "&offset=" + loaded;
+
+    fetch(url, { headers: headers({ "Prefer": "count=exact" }) }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      var range = res.headers.get("Content-Range"); // 예: 0-19/53
+      var total = range ? Number(range.split("/")[1]) : NaN;
+      return res.json().then(function (rows) { return { rows: rows, total: total }; });
+    }).then(function (out) {
+      if (reset) listEl.innerHTML = "";
+      if (!out.rows.length && loaded === 0) {
+        listEl.innerHTML = "";
+        var p = document.createElement("p");
+        p.className = "empty";
+        p.textContent = "아직 흔적이 없어요. 첫 흔적을 남겨주세요.";
+        listEl.appendChild(p);
+      }
+      out.rows.forEach(function (r, i) { listEl.appendChild(renderReview(r, reset && justPosted && i === 0)); });
+      justPosted = false;
+      loaded += out.rows.length;
+      if (!isNaN(out.total)) {
+        totalEl.textContent = "(" + out.total + "개)";
+        moreBtn.hidden = loaded >= out.total;
+      } else {
+        moreBtn.hidden = out.rows.length < PAGE_SIZE;
+      }
+    }).catch(function () {
+      if (loaded === 0) {
+        listEl.innerHTML = "";
+        var p = document.createElement("p");
+        p.className = "empty";
+        p.textContent = "흔적을 불러오지 못했어요. 잠시 뒤 새로고침해주세요.";
+        listEl.appendChild(p);
+      }
+    }).then(function () { moreBtn.disabled = false; });
+  }
+
+  moreBtn.addEventListener("click", function () { loadReviews(false); });
+
+  // ---------- 후기 보내기 ----------
+  msgInput.addEventListener("input", function () { counter.textContent = msgInput.value.length; });
+
+  function lastSent() { try { return Number(localStorage.getItem("review_last_sent")) || 0; } catch (e) { return 0; } }
+  function markSent() { try { localStorage.setItem("review_last_sent", String(Date.now())); } catch (e) {} }
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (!configured()) { setStatus("아직 Supabase 주소와 키가 설정되지 않았어요. 코드 위쪽의 두 값을 먼저 바꿔주세요.", "err"); return; }
+    if (trap.value) { setStatus("흔적이 등록됐어요. 읽어주셔서 고마워요.", "ok"); return; } // 봇은 성공처럼 보이게 하고 버림
+
+    var message = msgInput.value.trim();
+    if (!message) { setStatus("흔적을 남겨주세요.", "err"); msgInput.focus(); return; }
+
+    var wait = COOLDOWN_MS - (Date.now() - lastSent());
+    if (wait > 0) { setStatus(Math.ceil(wait / 1000) + "초 뒤에 다시 보낼 수 있어요.", "err"); return; }
+
+    btn.disabled = true;
+    setStatus("전송하는 중이에요…");
+
+    fetch(SUPABASE_URL + "/rest/v1/reviews", {
+      method: "POST",
+      headers: headers({ "Content-Type": "application/json", "Prefer": "return=minimal" }),
+      body: JSON.stringify({ nickname: nickInput.value.trim() || "익명", message: message })
+    }).then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      markSent();
+      form.reset();
+      counter.textContent = "0";
+      setStatus("흔적이 등록됐어요. 읽어주셔서 고마워요.", "ok");
+      justPosted = true;
+      loadReviews(true); // 방금 쓴 후기가 바로 보이도록 목록 새로고침
+    }).catch(function () {
+      setStatus("전송하지 못했어요. 잠시 뒤 다시 시도해주세요.", "err");
+    }).then(function () { btn.disabled = false; });
+  });
+
+  loadReviews(true);
+</script>
+</body>
+</html>
